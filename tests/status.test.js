@@ -52,6 +52,19 @@ test('status reports clean working tree after commit', () => {
     assert.match(output, /nothing to commit, working tree clean/i)
 })
 
+test('status shows tracked file even when in .mygitignore', () => {
+    const filePath = path.join(baseDir, 'text.txt')
+    fs.writeFileSync(filePath, 'hello')
+
+    run(`mygit add text.txt`)
+    run(`mygit commit -m "initial commit"`)
+
+    fs.writeFileSync(path.join(baseDir, '.mygitignore'), 'text.txt')
+
+    const output = run('mygit status')
+    assert.doesNotMatch(output, /deleted:\s+text\.txt/i)
+})
+
 // TEST STAGED MODIFIED FILE
 test('status shows staged modified files', () => {
     const filePath = path.join(baseDir, 'modified.txt')

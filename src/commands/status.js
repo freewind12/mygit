@@ -34,7 +34,7 @@ function readTree(treeHash, prefix='') {
     return files
 }
 
-function getWorkingDirectoryFiles(baseDir = process.cwd(), currentDir = process.cwd(), mygitignorePatterns = null) {
+function getWorkingDirectoryFiles(baseDir = process.cwd(), currentDir = process.cwd(), mygitignorePatterns = null, indexEntries = {}) {
     // ─── Get all files in working directory with their hashes ───────────────
     // Returns: { 'path/to/file.txt': 'computed-hash', ... }
 
@@ -56,14 +56,14 @@ function getWorkingDirectoryFiles(baseDir = process.cwd(), currentDir = process.
         const stats = fs.statSync(fullPath)
         const relativePath = path.relative(baseDir, fullPath).split(path.sep).join('/');
 
-        if (isIgnored(relativePath, mygitignorePatterns)) {
+        if (isIgnored(relativePath, mygitignorePatterns) && !indexEntries[relativePath]) {
             continue
         }
 
 
         if (stats.isDirectory()) {
             // Recurse into sub directoru
-            const subfiles = getWorkingDirectoryFiles(baseDir, fullPath, mygitignorePatterns)
+            const subfiles = getWorkingDirectoryFiles(baseDir, fullPath, mygitignorePatterns, indexEntries)
             Object.assign(files, subfiles)
         } else if (stats.isFile()) {
             // Hash the file to compare with commited version
@@ -99,7 +99,7 @@ function status() {
 
     const currentCommit = getCurrentCommit()
     const index = readIndex()
-    const workingFiles = getWorkingDirectoryFiles()
+    const workingFiles = getWorkingDirectoryFiles(process.cwd(), process.cwd(), null, index.entries)
 
     // 4. Handle case: no commits yet
     if (!currentCommit) {
@@ -288,4 +288,3 @@ function status() {
 }
 
 module.exports = status
-
